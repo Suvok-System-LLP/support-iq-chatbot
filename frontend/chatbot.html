@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SupportIQ Assistant — Ask About NDIS Compliance</title>
+    <meta
+      name="description"
+      content="Chat with the SupportIQ AI assistant. Ask about NDIS billing, SCHADS Award pay, DEX reporting, and how SupportIQ automates compliance for Australian NDIS providers."
+    />
+    <meta name="robots" content="noindex" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --navy: #0b1d3f;
+        --blue: #1a56db;
+        --teal: #0ea5a0;
+        --gold: #d4a843;
+        --sage: #6b9e7a;
+        --cream: #faf8f4;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --light-blue: #eef3fc;
+      }
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: linear-gradient(
+          135deg,
+          var(--blue) 0%,
+          #0b3ba1 55%,
+          var(--navy) 100%
+        );
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .chat-container {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .chat-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: center;
+        margin-bottom: 8px;
+      }
+      .chat-logo {
+        width: 40px;
+        height: 40px;
+        background: var(--blue);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Playfair Display", serif;
+        font-weight: 900;
+        font-size: 18px;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+      .chat-brand-name {
+        font-family: "Playfair Display", serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+      }
+      .chat-brand-name span {
+        color: var(--gold);
+      }
+      .chat-tagline {
+        text-align: center;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.65);
+        margin-bottom: 8px;
+      }
+      .chat-box {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        height: 580px;
+      }
+      .chat-header {
+        background: var(--navy);
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .chat-header-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .chat-header-logo {
+        width: 32px;
+        height: 32px;
+        background: var(--blue);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Playfair Display", serif;
+        font-weight: 900;
+        font-size: 14px;
+        color: white;
+      }
+      .chat-header-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: white;
+      }
+      .chat-header-status {
+        font-size: 11px;
+        color: var(--sage);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .chat-header-status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--sage);
+        display: inline-block;
+      }
+      .chat-header-demo {
+        background: var(--gold);
+        color: var(--navy);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 20px;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .chat-lead-gate {
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+      .chat-lead-gate h4 {
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--navy);
+        margin-bottom: 8px;
+      }
+      .chat-lead-gate p {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 24px;
+        line-height: 1.6;
+      }
+      .topic-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+      .topic-chip {
+        background: var(--light-blue);
+        color: var(--blue);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 20px;
+      }
+      .chat-input-field {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        color: var(--navy);
+        margin-bottom: 12px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .chat-input-field:focus {
+        border-color: var(--blue);
+      }
+      .chat-start-btn {
+        background: var(--blue);
+        color: white;
+        border: none;
+        padding: 13px;
+        border-radius: 9px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+      }
+      .chat-start-btn:hover {
+        background: #1648c0;
+      }
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .chat-msg {
+        max-width: 85%;
+        padding: 11px 15px;
+        border-radius: 13px;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .chat-msg-bot {
+        background: var(--light-blue);
+        color: var(--navy);
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+      }
+      .chat-msg-user {
+        background: var(--blue);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+      }
+      .chat-msg-typing {
+        background: var(--light-blue);
+        color: var(--muted);
+        align-self: flex-start;
+        font-style: italic;
+        font-size: 12px;
+      }
+      .chat-input-row {
+        padding: 14px 18px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 9px;
+      }
+      .chat-text-input {
+        flex: 1;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .chat-text-input:focus {
+        border-color: var(--blue);
+      }
+      .chat-send-btn {
+        background: var(--blue);
+        color: white;
+        border: none;
+        border-radius: 9px;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-size: 15px;
+        transition: background 0.2s;
+      }
+      .chat-send-btn:hover {
+        background: #1648c0;
+      }
+      .chat-footer {
+        text-align: center;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.4);
+      }
+      .chat-footer a {
+        color: rgba(255, 255, 255, 0.6);
+        text-decoration: none;
+      }
+      .chat-footer a:hover {
+        color: white;
+      }
+      .suggested-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 0 18px 12px;
+      }
+      .suggest-btn {
+        background: var(--light-blue);
+        color: var(--blue);
+        border: none;
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .suggest-btn:hover {
+        background: #dbe8fa;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="chat-brand">
+        <div class="chat-logo">S</div>
+        <div class="chat-brand-name">Support<span>IQ</span></div>
+      </div>
+      <p class="chat-tagline">
+        AI-powered NDIS compliance assistant — ask anything about NDIS, SCHADS,
+        or DEX reporting
+      </p>
+
+      <div class="chat-box">
+        <div class="chat-header">
+          <div class="chat-header-info">
+            <div class="chat-header-logo">S</div>
+            <div>
+              <div class="chat-header-name">SupportIQ Assistant</div>
+              <div class="chat-header-status">Online now</div>
+            </div>
+          </div>
+          <a
+            href="https://calendly.com/matthew-support-iq/30min"
+            target="_blank"
+            class="chat-header-demo"
+            >Book Demo →</a
+          >
+        </div>
+
+        <!-- Lead Gate -->
+        <div class="chat-lead-gate" id="chatLeadGate">
+          <h4>Hi! Ask me anything about NDIS 👋</h4>
+          <p>
+            I can answer questions about NDIS billing, SCHADS Award pay, DEX
+            reporting, PRODA claims, and how SupportIQ automates compliance for
+            providers across Australia.
+          </p>
+          <div class="topic-chips">
+            <span class="topic-chip">NDIS Billing</span>
+            <span class="topic-chip">SCHADS Award</span>
+            <span class="topic-chip">DEX Reporting</span>
+            <span class="topic-chip">PRODA Claims</span>
+            <span class="topic-chip">Rostering</span>
+            <span class="topic-chip">Audit Readiness</span>
+          </div>
+          <input
+            type="text"
+            class="chat-input-field"
+            id="chat-name"
+            placeholder="Your first name *"
+          />
+          <input
+            type="email"
+            class="chat-input-field"
+            id="chat-email"
+            placeholder="Work email address *"
+          />
+          <button class="chat-start-btn" onclick="startChat()">
+            Start Chatting →
+          </button>
+          <p
+            style="
+              font-size: 11px;
+              color: var(--muted);
+              text-align: center;
+              margin-top: 12px;
+            "
+          >
+            🔒 We respect your privacy. No spam, ever.
+          </p>
+        </div>
+
+        <!-- Chat Interface -->
+        <div
+          id="chatInterface"
+          style="
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+          "
+        >
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="suggested-btns" id="suggestedBtns">
+            <button
+              class="suggest-btn"
+              onclick="quickAsk('How does NDIS billing automation work?')"
+            >
+              NDIS Billing
+            </button>
+            <button
+              class="suggest-btn"
+              onclick="quickAsk('What is the SCHADS Award?')"
+            >
+              SCHADS Award
+            </button>
+            <button
+              class="suggest-btn"
+              onclick="quickAsk('How does DEX reporting work?')"
+            >
+              DEX Reporting
+            </button>
+            <button
+              class="suggest-btn"
+              onclick="quickAsk('How do I book a demo?')"
+            >
+              Book Demo
+            </button>
+          </div>
+          <div class="chat-input-row">
+            <input
+              type="text"
+              class="chat-text-input"
+              id="chatInput"
+              placeholder="Ask about NDIS, SCHADS, DEX..."
+              onkeypress="if (event.key === 'Enter') sendMessage();"
+            />
+            <button class="chat-send-btn" onclick="sendMessage()">→</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-footer">
+        Powered by <a href="https://support-iq.com.au">SupportIQ</a> ·
+        <a href="https://calendly.com/matthew-support-iq/30min" target="_blank"
+          >Book a Demo</a
+        >
+        ·
+        <a href="https://wa.me/61424046730" target="_blank">WhatsApp Matthew</a>
+      </div>
+    </div>
+
+    <script>
+      const CHATBOT_ENDPOINT = "https://supportiq-chatbot-746238216503.australia-southeast1.run.app/chat";
+      const FORMSPREE_URL = "https://formspree.io/f/mwvwqpyd";
+      let chatHistory = [],
+        chatUserName = "";
+
+      function startChat() {
+        const name = document.getElementById("chat-name").value.trim();
+        const email = document.getElementById("chat-email").value.trim();
+        if (!name) {
+          alert("Please enter your name.");
+          return;
+        }
+        if (!email || !email.includes("@")) {
+          alert("Please enter a valid email.");
+          return;
+        }
+        chatUserName = name;
+        fetch(FORMSPREE_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            from_name: name,
+            from_email: email,
+            source: "Standalone Chatbot",
+            time: new Date().toLocaleString("en-AU"),
+            message: "New lead from SupportIQ standalone chatbot page",
+          }),
+        });
+        document.getElementById("chatLeadGate").style.display = "none";
+        const ci = document.getElementById("chatInterface");
+        ci.style.display = "flex";
+        ci.style.flexDirection = "column";
+        ci.style.flex = "1";
+        ci.style.overflow = "hidden";
+        addBotMessage(
+          "Hi " +
+            name +
+            "! 👋 I'm the SupportIQ assistant. I can help with questions about NDIS billing, SCHADS Award pay, DEX reporting, PRODA claims, and the SupportIQ platform. What would you like to know?",
+        );
+      }
+
+      function quickAsk(q) {
+        document.getElementById("chatInput").value = q;
+        sendMessage();
+        document.getElementById("suggestedBtns").style.display = "none";
+      }
+
+      function addBotMessage(text) {
+        const msgs = document.getElementById("chatMessages");
+        const d = document.createElement("div");
+        d.className = "chat-msg chat-msg-bot";
+        d.textContent = text;
+        msgs.appendChild(d);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+      function addUserMessage(text) {
+        const msgs = document.getElementById("chatMessages");
+        const d = document.createElement("div");
+        d.className = "chat-msg chat-msg-user";
+        d.textContent = text;
+        msgs.appendChild(d);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+      function addTyping() {
+        const msgs = document.getElementById("chatMessages");
+        const d = document.createElement("div");
+        d.className = "chat-msg chat-msg-typing";
+        d.id = "typingIndicator";
+        d.textContent = "SupportIQ is typing...";
+        msgs.appendChild(d);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+      function removeTyping() {
+        const t = document.getElementById("typingIndicator");
+        if (t) t.remove();
+      }
+
+      async function sendMessage() {
+        const input = document.getElementById("chatInput");
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = "";
+        addUserMessage(text);
+        chatHistory.push({ role: "user", content: text });
+        addTyping();
+        try {
+          const res = await fetch(CHATBOT_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: text,
+              history: chatHistory,
+              user: chatUserName,
+              system:
+                "You are the SupportIQ Sales Assistant — an expert in Australian NDIS compliance, SCHADS Award, DEX reporting, and the SupportIQ platform. Help NDIS service providers understand how SupportIQ automates billing, payroll, DEX/DSS reporting, and rostering. Answer questions about NDIS billing rules, PRODA claims, SCHADS Award pay rates, DEX reporting requirements, and SupportIQ features. Be warm, professional, and knowledgeable. Always encourage booking a demo at https://calendly.com/matthew-support-iq/30min for detailed questions. Never discuss pricing beyond: Starter $399/month up to 20 participants, Growth $799/month up to 40 participants, Enterprise custom.",
+            }),
+          });
+          removeTyping();
+          if (res.ok) {
+            const data = await res.json();
+            const reply =
+              data.reply ||
+              data.message ||
+              data.content ||
+              "Could you rephrase that?";
+            addBotMessage(reply);
+            chatHistory.push({ role: "assistant", content: reply });
+          } else {
+            fallbackResponse(text);
+          }
+        } catch (e) {
+          removeTyping();
+          fallbackResponse(text);
+        }
+      }
+
+      function fallbackResponse(text) {
+        const t = text.toLowerCase();
+        let reply = "";
+        if (t.includes("price") || t.includes("cost")) {
+          reply =
+            "Starter is $399/month (up to 20 participants), Growth is $799/month (up to 40 participants), Enterprise is custom. All plans include the full platform — same AI agents, same features. Book a demo to discuss your needs!";
+        } else if (
+          t.includes("schads") ||
+          t.includes("pay") ||
+          t.includes("award")
+        ) {
+          reply =
+            "SupportIQ includes a full SCHADS Award engine covering all classifications, penalty rates, allowances, and overtime. Every payroll run is automated and audit-ready. Try the free SCHADS Calculator on our website!";
+        } else if (
+          t.includes("dex") ||
+          t.includes("dss") ||
+          t.includes("report")
+        ) {
+          reply =
+            "SupportIQ automates DEX data collection from service records and submits directly to DSS on schedule. No more manual spreadsheets or missed deadlines.";
+        } else if (
+          t.includes("billing") ||
+          t.includes("proda") ||
+          t.includes("claim")
+        ) {
+          reply =
+            "Our AI billing agents validate every claim against the current NDIS Price Guide before PRODA submission — eliminating rejection from wrong codes, mismatched rates, or expired plans.";
+        } else if (t.includes("demo") || t.includes("book")) {
+          reply =
+            "Book a free 20-minute demo with Matthew at https://calendly.com/matthew-support-iq/30min — he'll walk you through the platform using your specific use case.";
+        } else {
+          reply =
+            "Great question! For the most accurate answer, I'd recommend booking a free 20-minute demo with Matthew: https://calendly.com/matthew-support-iq/30min — he'll show you exactly how SupportIQ handles your scenario.";
+        }
+        addBotMessage(reply);
+        chatHistory.push({ role: "assistant", content: reply });
+      }
+    </script>
+  
+</body>
+</html>

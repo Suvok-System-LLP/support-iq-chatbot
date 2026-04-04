@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+google-cloud-aiplatform>=1.38.0
+google-genai>=1.0.0
+langchain
+langchain-google-vertexai
+langchain-community
+tiktoken
+pydantic>=2.0
+python-multipart
+tqdm
