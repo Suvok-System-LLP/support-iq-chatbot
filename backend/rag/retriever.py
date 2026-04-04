@@ -16,8 +16,14 @@ _REGION = os.getenv("GOOGLE_CLOUD_REGION", "australia-southeast1")
 _INDEX_ENDPOINT_ID = os.getenv("VERTEX_INDEX_ENDPOINT_ID", "")
 _DEPLOYED_INDEX_ID = os.getenv("VERTEX_DEPLOYED_INDEX_ID", "")
 
-# Path to the local chunk metadata store written by ingest_docs.py
-_CHUNK_STORE_PATH = Path(__file__).parent.parent.parent / "knowledge" / "chunk_store.json"
+# Path to the local chunk metadata store written by ingest_docs.py.
+# Search multiple locations: Docker image first, then local dev paths.
+_CHUNK_STORE_CANDIDATES = [
+    Path("/app/chunk_store.json"),                                  # Cloud Run Docker
+    Path(__file__).parent.parent.parent / "knowledge" / "chunk_store.json",  # local dev
+    Path("knowledge") / "chunk_store.json",                         # fallback
+]
+_CHUNK_STORE_PATH = next((p for p in _CHUNK_STORE_CANDIDATES if p.exists()), _CHUNK_STORE_CANDIDATES[0])
 
 # In-memory chunk store: id -> chunk dict
 CHUNK_STORE: dict[str, dict] = {}
