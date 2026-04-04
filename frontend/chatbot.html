@@ -315,6 +315,19 @@
       .suggest-btn:hover {
         background: #dbe8fa;
       }
+      .chat-msg-bot a {
+        color: var(--blue);
+        text-decoration: underline;
+        font-weight: 600;
+      }
+      .chat-msg-bot ul {
+        margin: 4px 0;
+        padding-left: 18px;
+        list-style: disc;
+      }
+      .chat-msg-bot li {
+        margin-bottom: 2px;
+      }
     </style>
   </head>
   <body>
@@ -499,11 +512,52 @@
         document.getElementById("suggestedBtns").style.display = "none";
       }
 
+      function parseMarkdown(text) {
+        // Split into lines for list detection
+        const lines = text.split("\n");
+        const parsed = [];
+        let inList = false;
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          const listMatch = trimmed.match(/^[\*\-]\s+(.*)/);
+          if (listMatch) {
+            if (!inList) {
+              parsed.push("<ul>");
+              inList = true;
+            }
+            parsed.push("<li>" + formatInline(listMatch[1]) + "</li>");
+          } else {
+            if (inList) {
+              parsed.push("</ul>");
+              inList = false;
+            }
+            parsed.push(formatInline(trimmed));
+          }
+        }
+        if (inList) parsed.push("</ul>");
+
+        return parsed.join("<br>");
+      }
+
+      function formatInline(text) {
+        // Bold: **text**
+        text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        // Italic: *text* (but not inside URLs or already-processed bold)
+        text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>");
+        // URLs: https://...
+        text = text.replace(
+          /(https:\/\/[^\s<,)]+)/g,
+          '<a href="$1" target="_blank" rel="noopener">$1</a>'
+        );
+        return text;
+      }
+
       function addBotMessage(text) {
         const msgs = document.getElementById("chatMessages");
         const d = document.createElement("div");
         d.className = "chat-msg chat-msg-bot";
-        d.textContent = text;
+        d.innerHTML = parseMarkdown(text);
         msgs.appendChild(d);
         msgs.scrollTop = msgs.scrollHeight;
       }
@@ -515,16 +569,27 @@
         msgs.appendChild(d);
         msgs.scrollTop = msgs.scrollHeight;
       }
+      let typingTimer = null;
       function addTyping() {
         const msgs = document.getElementById("chatMessages");
         const d = document.createElement("div");
         d.className = "chat-msg chat-msg-typing";
         d.id = "typingIndicator";
-        d.textContent = "SupportIQ is typing...";
+        let seconds = 0;
+        d.textContent = "SupportIQ is thinking... (0s)";
         msgs.appendChild(d);
         msgs.scrollTop = msgs.scrollHeight;
+        typingTimer = setInterval(() => {
+          seconds++;
+          d.textContent = "SupportIQ is thinking... (" + seconds + "s)";
+          msgs.scrollTop = msgs.scrollHeight;
+        }, 1000);
       }
       function removeTyping() {
+        if (typingTimer) {
+          clearInterval(typingTimer);
+          typingTimer = null;
+        }
         const t = document.getElementById("typingIndicator");
         if (t) t.remove();
       }
@@ -606,6 +671,5 @@
         chatHistory.push({ role: "assistant", content: reply });
       }
     </script>
-  
-</body>
+  </body>
 </html>

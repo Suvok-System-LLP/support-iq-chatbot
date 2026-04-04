@@ -48,14 +48,25 @@ app = FastAPI(title="SupportIQ Chatbot API", version="1.0.0", lifespan=lifespan)
 
 _raw_origins = os.getenv(
     "ALLOWED_ORIGINS",
-    "https://support-iq.com.au,https://supportiq.com.au,http://localhost:3000,http://127.0.0.1:5500",
+    "https://support-iq.com.au,https://supportiq.com.au,http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:5500,https://*.netlify.app",
 )
 allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
+# Always include localhost and Netlify even if env var overrides the default
+_always_include = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5500",
+    "https://*.netlify.app",
+]
+for origin in _always_include:
+    if origin not in allowed_origins:
+        allowed_origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
