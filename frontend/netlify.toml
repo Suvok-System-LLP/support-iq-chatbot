@@ -1,9 +1,15 @@
 [build]
   publish = "."
 
-[[edge_functions]]
-  function = "chat"
-  path = "/api/chat"
+[[redirects]]
+  from = "/chatbot"
+  to = "/chatbot.html"
+  status = 200
+
+[[redirects]]
+  from = "/chat"
+  to = "/chatbot.html"
+  status = 200
 
 [[headers]]
   for = "/*"
