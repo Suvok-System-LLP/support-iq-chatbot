@@ -325,6 +325,9 @@ footer{background:var(--dark-navy);padding:48px 5% 32px;}
 .chat-msg-bot{background:var(--light-blue);color:var(--navy);align-self:flex-start;border-bottom-left-radius:4px;}
 .chat-msg-user{background:var(--blue);color:white;align-self:flex-end;border-bottom-right-radius:4px;}
 .chat-msg-typing{background:var(--light-blue);color:var(--muted);align-self:flex-start;border-bottom-left-radius:4px;font-style:italic;}
+.chat-msg-bot a{color:var(--blue);text-decoration:underline;font-weight:600;}
+.chat-msg-bot ul{margin:4px 0;padding-left:18px;list-style:disc;}
+.chat-msg-bot li{margin-bottom:2px;}
 .chat-input-row{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;}
 .chat-text-input{flex:1;padding:9px 13px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
 .chat-text-input:focus{border-color:var(--blue);}
@@ -837,7 +840,7 @@ footer{background:var(--dark-navy);padding:48px 5% 32px;}
 <script>
 // ── CONSTANTS ── 
 // CHATBOT_ENDPOINT: Replace with your SupportIQ backend agent URL when ready
-const CHATBOT_ENDPOINT = 'https://api.supportiq.com.au/chat';
+const CHATBOT_ENDPOINT = 'https://supportiq-chatbot-746238216503.australia-southeast1.run.app/chat';
 const FORMSPREE_URL = 'https://formspree.io/f/mwvwqpyd';
 
 // ── SCHADS RATE DATA (from schads_v2025_01.json) ──
@@ -965,11 +968,37 @@ function startChat(){
   addBotMessage('Hi '+name+'! 👋 I\'m the SupportIQ assistant. I can help you with questions about NDIS billing, SCHADS Award pay, DEX reporting, and how SupportIQ automates compliance for NDIS providers. What would you like to know?');
 }
 
+function parseMarkdown(text){
+  const lines=text.split("\n");
+  const parsed=[];
+  let inList=false;
+  for(const line of lines){
+    const trimmed=line.trim();
+    const listMatch=trimmed.match(/^[\*\-]\s+(.*)/);
+    if(listMatch){
+      if(!inList){parsed.push("<ul>");inList=true;}
+      parsed.push("<li>"+formatInline(listMatch[1])+"</li>");
+    }else{
+      if(inList){parsed.push("</ul>");inList=false;}
+      parsed.push(formatInline(trimmed));
+    }
+  }
+  if(inList)parsed.push("</ul>");
+  return parsed.join("<br>");
+}
+
+function formatInline(text){
+  text=text.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
+  text=text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,"<em>$1</em>");
+  text=text.replace(/(https:\/\/[^\s<,)]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
+  return text;
+}
+
 function addBotMessage(text){
   const msgs=document.getElementById('chatMessages');
   const d=document.createElement('div');
   d.className='chat-msg chat-msg-bot';
-  d.textContent=text;
+  d.innerHTML=parseMarkdown(text);
   msgs.appendChild(d);
   msgs.scrollTop=msgs.scrollHeight;
 }
@@ -983,17 +1012,21 @@ function addUserMessage(text){
   msgs.scrollTop=msgs.scrollHeight;
 }
 
+let typingTimer=null;
 function addTyping(){
   const msgs=document.getElementById('chatMessages');
   const d=document.createElement('div');
   d.className='chat-msg chat-msg-typing';
   d.id='typingIndicator';
-  d.textContent='SupportIQ is typing...';
+  let seconds=0;
+  d.textContent='SupportIQ is thinking... (0s)';
   msgs.appendChild(d);
   msgs.scrollTop=msgs.scrollHeight;
+  typingTimer=setInterval(()=>{seconds++;d.textContent='SupportIQ is thinking... ('+seconds+'s)';msgs.scrollTop=msgs.scrollHeight;},1000);
 }
 
 function removeTyping(){
+  if(typingTimer){clearInterval(typingTimer);typingTimer=null;}
   const t=document.getElementById('typingIndicator');
   if(t)t.remove();
 }
