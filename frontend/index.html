@@ -333,6 +333,8 @@ footer{background:var(--dark-navy);padding:48px 5% 32px;}
 .chat-msg-bot{background:var(--light-blue);color:var(--navy);align-self:flex-start;border-bottom-left-radius:4px;}
 .chat-msg-user{background:var(--blue);color:white;align-self:flex-end;border-bottom-right-radius:4px;}
 .chat-msg-typing{background:var(--light-blue);color:var(--muted);align-self:flex-start;border-bottom-left-radius:4px;font-style:italic;}
+.streaming-cursor{display:inline;animation:blink .7s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
 .chat-msg-bot a{color:var(--blue);text-decoration:underline;font-weight:600;}
 .chat-msg-bot ul{margin:4px 0;padding-left:18px;list-style:disc;}
 .chat-msg-bot li{margin-bottom:2px;}
@@ -829,7 +831,7 @@ footer{background:var(--dark-navy);padding:48px 5% 32px;}
   <!-- Lead gate -->
   <div class="chat-lead-gate" id="chatLeadGate">
     <h4>Hi! I'm the SupportIQ Assistant 👋</h4>
-    <p>I can answer your questions about NDIS billing, SCHADS Award, DEX reporting, and how SupportIQ works. Before we chat, what's your name and email?</p>
+    <p>I can answer your questions about NDIS billing, PRODA claims, the NDIS Price Guide, and how SupportIQ works. Before we chat, what's your name and email?</p>
     <input type="text" class="chat-input-field" id="chat-name" placeholder="Your first name *">
     <input type="email" class="chat-input-field" id="chat-email" placeholder="Work email address *">
     <button class="chat-start-btn" onclick="startChat()">Start Chatting →</button>
@@ -839,7 +841,7 @@ footer{background:var(--dark-navy);padding:48px 5% 32px;}
   <div id="chatInterface" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
     <div class="chat-messages" id="chatMessages"></div>
     <div class="chat-input-row">
-      <input type="text" class="chat-text-input" id="chatInput" placeholder="Ask about NDIS, SCHADS, DEX..." onkeypress="if(event.key==='Enter')sendMessage()">
+      <input type="text" class="chat-text-input" id="chatInput" placeholder="Ask about NDIS billing, claims, compliance..." onkeypress="if(event.key==='Enter')sendMessage()">
       <button class="chat-send-btn" onclick="sendMessage()">→</button>
     </div>
   </div>
@@ -848,7 +850,7 @@ footer{background:var(--dark-navy);padding:48px 5% 32px;}
 <script>
 // ── CONSTANTS ── 
 // CHATBOT_ENDPOINT: Replace with your SupportIQ backend agent URL when ready
-const CHATBOT_ENDPOINT = 'https://supportiq-chatbot-746238216503.australia-southeast1.run.app/chat';
+const CHATBOT_ENDPOINT = 'https://supportiq-chatbot-746238216503.australia-southeast1.run.app/chat/stream';
 const FORMSPREE_URL = 'https://formspree.io/f/mwvwqpyd';
 
 // ── SCHADS RATE DATA (from schads_v2025_01.json) ──
@@ -973,7 +975,7 @@ function startChat(){
   ci.style.flex='1';
   ci.style.overflow='hidden';
   chatStarted=true;
-  addBotMessage('Hi '+name+'! 👋 I\'m the SupportIQ assistant. I can help you with questions about NDIS billing, SCHADS Award pay, DEX reporting, and how SupportIQ automates compliance for NDIS providers. What would you like to know?');
+  addBotMessage('Hi '+name+'! 👋 I\'m the SupportIQ assistant. I can help you with questions about NDIS billing, PRODA claims, the NDIS Price Guide, and how SupportIQ automates compliance for NDIS providers. What would you like to know?');
 }
 
 function parseMarkdown(text){
@@ -1046,30 +1048,54 @@ async function sendMessage(){
   input.value='';
   addUserMessage(text);
   chatHistory.push({role:'user',content:text});
-  addTyping();
+
+  // Create streaming bot message with blinking cursor
+  const msgs=document.getElementById('chatMessages');
+  const botMsg=document.createElement('div');
+  botMsg.className='chat-msg chat-msg-bot';
+  botMsg.innerHTML='<span class="streaming-cursor">▋</span>';
+  msgs.appendChild(botMsg);
+  msgs.scrollTop=msgs.scrollHeight;
+
+  let fullText='';
+
   try{
-    // CHATBOT_ENDPOINT: Replace with live SupportIQ backend agent URL
     const res=await fetch(CHATBOT_ENDPOINT,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        message:text,
-        history:chatHistory,
-        user:chatUserName,
-        system:'You are the SupportIQ Sales Assistant — an expert in Australian NDIS compliance, SCHADS Award, DEX reporting, and the SupportIQ platform. Help NDIS service providers understand how SupportIQ automates billing, payroll, DEX/DSS reporting, and rostering. Answer questions about NDIS billing rules, PRODA claims, SCHADS Award pay rates, DEX reporting requirements, and SupportIQ features. Be warm, professional, and knowledgeable. Always encourage booking a demo at https://calendly.com/matthew-support-iq/30min for detailed questions. Never discuss pricing beyond what is on the website: Starter $399/month up to 20 participants, Growth $799/month up to 40 participants, Enterprise custom.'
-      })
+      body:JSON.stringify({message:text,history:chatHistory,user:chatUserName})
     });
-    removeTyping();
-    if(res.ok){
-      const data=await res.json();
-      const reply=data.reply||data.message||data.content||'I\'m here to help! Could you rephrase your question?';
-      addBotMessage(reply);
-      chatHistory.push({role:'assistant',content:reply});
-    } else {
-      fallbackResponse(text);
+
+    if(!res.ok){botMsg.remove();fallbackResponse(text);return;}
+
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      const chunk=decoder.decode(value,{stream:true});
+      const lines=chunk.split('\n');
+      for(const line of lines){
+        if(!line.startsWith('data: '))continue;
+        const data=line.slice(6);
+        if(data==='[DONE]')continue;
+        try{
+          const parsed=JSON.parse(data);
+          if(parsed.text){
+            fullText+=parsed.text;
+            botMsg.innerHTML=parseMarkdown(fullText)+' <span class="streaming-cursor">▋</span>';
+            msgs.scrollTop=msgs.scrollHeight;
+          }
+        }catch(e){}
+      }
     }
-  } catch(e){
-    removeTyping();
+
+    // Remove cursor, finalise
+    botMsg.innerHTML=parseMarkdown(fullText||'Could you rephrase that?');
+    chatHistory.push({role:'assistant',content:fullText});
+  }catch(e){
+    botMsg.remove();
     fallbackResponse(text);
   }
 }

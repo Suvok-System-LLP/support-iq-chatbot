@@ -323,6 +323,19 @@
       .suggest-btn:hover {
         background: #dbe8fa;
       }
+      .streaming-cursor {
+        display: inline;
+        animation: blink 0.7s step-end infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
       .chat-msg-bot a {
         color: var(--blue);
         text-decoration: underline;
@@ -345,8 +358,8 @@
         <div class="chat-brand-name">Support<span>IQ</span></div>
       </div>
       <p class="chat-tagline">
-        AI-powered NDIS compliance assistant — ask anything about NDIS, SCHADS,
-        or DEX reporting
+        AI-powered NDIS compliance assistant — ask anything about NDIS
+        compliance and billing
       </p>
 
       <div class="chat-box">
@@ -370,16 +383,15 @@
         <div class="chat-lead-gate" id="chatLeadGate">
           <h4>Hi! Ask me anything about NDIS 👋</h4>
           <p>
-            I can answer questions about NDIS billing, SCHADS Award pay, DEX
-            reporting, PRODA claims, and how SupportIQ automates compliance for
-            providers across Australia.
+            I can answer questions about NDIS billing, PRODA claims, the NDIS
+            Price Guide, and how SupportIQ automates compliance for providers
+            across Australia.
           </p>
           <div class="topic-chips">
             <span class="topic-chip">NDIS Billing</span>
-            <span class="topic-chip">SCHADS Award</span>
-            <span class="topic-chip">DEX Reporting</span>
             <span class="topic-chip">PRODA Claims</span>
-            <span class="topic-chip">Rostering</span>
+            <span class="topic-chip">NDIS Price Guide</span>
+            <span class="topic-chip">Compliance</span>
             <span class="topic-chip">Audit Readiness</span>
           </div>
           <input
@@ -429,15 +441,15 @@
             </button>
             <button
               class="suggest-btn"
-              onclick="quickAsk('What is the SCHADS Award?')"
+              onclick="quickAsk('How do I submit PRODA claims?')"
             >
-              SCHADS Award
+              PRODA Claims
             </button>
             <button
               class="suggest-btn"
-              onclick="quickAsk('How does DEX reporting work?')"
+              onclick="quickAsk('What does the NDIS Price Guide cover?')"
             >
-              DEX Reporting
+              NDIS Price Guide
             </button>
             <button
               class="suggest-btn"
@@ -451,7 +463,7 @@
               type="text"
               class="chat-text-input"
               id="chatInput"
-              placeholder="Ask about NDIS, SCHADS, DEX..."
+              placeholder="Ask about NDIS billing, claims, compliance..."
               onkeypress="if (event.key === 'Enter') sendMessage();"
             />
             <button class="chat-send-btn" onclick="sendMessage()">→</button>
@@ -470,7 +482,7 @@
     </div>
 
     <script>
-      const CHATBOT_ENDPOINT = "https://supportiq-chatbot-746238216503.australia-southeast1.run.app/chat";
+      const CHATBOT_ENDPOINT = "https://supportiq-chatbot-746238216503.australia-southeast1.run.app/chat/stream";
       const FORMSPREE_URL = "https://formspree.io/f/mwvwqpyd";
       let chatHistory = [],
         chatUserName = "";
@@ -510,7 +522,7 @@
         addBotMessage(
           "Hi " +
             name +
-            "! 👋 I'm the SupportIQ assistant. I can help with questions about NDIS billing, SCHADS Award pay, DEX reporting, PRODA claims, and the SupportIQ platform. What would you like to know?",
+            "! 👋 I'm the SupportIQ assistant. I can help with questions about NDIS billing, PRODA claims, the NDIS Price Guide, and the SupportIQ platform. What would you like to know?",
         );
       }
 
@@ -609,7 +621,17 @@
         input.value = "";
         addUserMessage(text);
         chatHistory.push({ role: "user", content: text });
-        addTyping();
+
+        // Create streaming bot message with blinking cursor
+        const msgs = document.getElementById("chatMessages");
+        const botMsg = document.createElement("div");
+        botMsg.className = "chat-msg chat-msg-bot";
+        botMsg.innerHTML = '<span class="streaming-cursor">▋</span>';
+        msgs.appendChild(botMsg);
+        msgs.scrollTop = msgs.scrollHeight;
+
+        let fullText = "";
+
         try {
           const res = await fetch(CHATBOT_ENDPOINT, {
             method: "POST",
@@ -618,25 +640,47 @@
               message: text,
               history: chatHistory,
               user: chatUserName,
-              system:
-                "You are the SupportIQ Sales Assistant — an expert in Australian NDIS compliance, SCHADS Award, DEX reporting, and the SupportIQ platform. Help NDIS service providers understand how SupportIQ automates billing, payroll, DEX/DSS reporting, and rostering. Answer questions about NDIS billing rules, PRODA claims, SCHADS Award pay rates, DEX reporting requirements, and SupportIQ features. Be warm, professional, and knowledgeable. Always encourage booking a demo at https://calendly.com/matthew-support-iq/30min for detailed questions. Never discuss pricing beyond: Starter $399/month up to 20 participants, Growth $799/month up to 40 participants, Enterprise custom.",
             }),
           });
-          removeTyping();
-          if (res.ok) {
-            const data = await res.json();
-            const reply =
-              data.reply ||
-              data.message ||
-              data.content ||
-              "Could you rephrase that?";
-            addBotMessage(reply);
-            chatHistory.push({ role: "assistant", content: reply });
-          } else {
+
+          if (!res.ok) {
+            botMsg.remove();
             fallbackResponse(text);
+            return;
           }
+
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              const data = line.slice(6);
+              if (data === "[DONE]") continue;
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.text) {
+                  fullText += parsed.text;
+                  botMsg.innerHTML =
+                    parseMarkdown(fullText) +
+                    ' <span class="streaming-cursor">▋</span>';
+                  msgs.scrollTop = msgs.scrollHeight;
+                }
+              } catch (e) {}
+            }
+          }
+
+          // Remove cursor, finalise message
+          botMsg.innerHTML = parseMarkdown(fullText || "Could you rephrase that?");
+          chatHistory.push({ role: "assistant", content: fullText });
         } catch (e) {
-          removeTyping();
+          botMsg.remove();
           fallbackResponse(text);
         }
       }

@@ -1,5 +1,6 @@
 """SupportIQ Chatbot — FastAPI entry point."""
 
+import json
 import logging
 import time
 from contextlib import asynccontextmanager
@@ -12,9 +13,11 @@ import os
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from agent import run as agent_run
+from agent import run_stream as agent_run_stream
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -132,3 +135,47 @@ async def chat(request: ChatRequest) -> ChatResponse:
     )
 
     return ChatResponse(reply=reply)
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest) -> StreamingResponse:
+    """Streaming chat endpoint — returns SSE events ending with data: [DONE]."""
+    logger.info(
+        "Streaming request | user=%s | message_length=%d",
+        request.user,
+        len(request.message),
+    )
+
+    async def event_generator():
+        start = time.monotonic()
+        try:
+            history_dicts = [m.model_dump() for m in request.history]
+            async for chunk in agent_run_stream(
+                request.message, history_dicts, request.user
+            ):
+                yield f"data: {json.dumps({'text': chunk})}\n\n"
+        except Exception:
+            logger.exception("Streaming error for user=%s", request.user)
+            fallback = (
+                "I'm having trouble right now. Please try again or book a demo at "
+                "https://calendly.com/matthew-support-iq/30min"
+            )
+            yield f"data: {json.dumps({'text': fallback})}\n\n"
+
+        elapsed_ms = int((time.monotonic() - start) * 1000)
+        logger.info(
+            "Stream complete | user=%s | latency_ms=%d",
+            request.user,
+            elapsed_ms,
+        )
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
