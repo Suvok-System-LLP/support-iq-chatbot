@@ -38,9 +38,7 @@ Demos are free, 20 minutes, and tailored to your organisation's needs.
 """
 
 DOMAIN_MAP: dict[str, str] = {
-    "schads": "schads",
     "ndis": "ndis",
-    "dex": "dex",
     "product": "product",
     "all": "all",
 }
@@ -54,24 +52,6 @@ DOMAIN_MAP: dict[str, str] = {
 def get_tool_declarations() -> list[genai_types.Tool]:
     """Return the list of Gemini Tool objects used by the orchestrator."""
 
-    search_schads = genai_types.FunctionDeclaration(
-        name="search_schads_knowledge",
-        description=(
-            "Search the SCHADS Award knowledge base for pay rates, penalty rates, "
-            "allowances, overtime rules, minimum engagements, and shift conditions."
-        ),
-        parameters=genai_types.Schema(
-            type=genai_types.Type.OBJECT,
-            properties={
-                "query": genai_types.Schema(
-                    type=genai_types.Type.STRING,
-                    description="The SCHADS-related question or keyword to search for.",
-                )
-            },
-            required=["query"],
-        ),
-    )
-
     search_ndis = genai_types.FunctionDeclaration(
         name="search_ndis_knowledge",
         description=(
@@ -83,24 +63,6 @@ def get_tool_declarations() -> list[genai_types.Tool]:
                 "query": genai_types.Schema(
                     type=genai_types.Type.STRING,
                     description="The NDIS-related question or keyword to search for.",
-                )
-            },
-            required=["query"],
-        ),
-    )
-
-    search_dex = genai_types.FunctionDeclaration(
-        name="search_dex_knowledge",
-        description=(
-            "Search DEX/DSS reporting requirements, SCORE metrics, SLK, and submission "
-            "rules knowledge base."
-        ),
-        parameters=genai_types.Schema(
-            type=genai_types.Type.OBJECT,
-            properties={
-                "query": genai_types.Schema(
-                    type=genai_types.Type.STRING,
-                    description="The DEX/DSS-related question or keyword to search for.",
                 )
             },
             required=["query"],
@@ -148,9 +110,7 @@ def get_tool_declarations() -> list[genai_types.Tool]:
     return [
         genai_types.Tool(
             function_declarations=[
-                search_schads,
                 search_ndis,
-                search_dex,
                 search_product,
                 get_demo_or_pricing,
             ]
